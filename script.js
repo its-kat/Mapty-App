@@ -78,7 +78,13 @@ class App {
   #workouts = [];
 
   constructor() {
+    // Get user's position
     this._getPosition();
+
+    //Get data from local storage
+    this._getLocalStorage();
+
+    // Attach even handlers
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
@@ -102,7 +108,6 @@ class App {
 
     const coords = [latitude, longitude];
 
-    console.log(this);
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
     // console.log(map);
 
@@ -113,6 +118,10 @@ class App {
 
     // Handling clicks on map
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workouts.forEach(work => {
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapE) {
@@ -186,7 +195,6 @@ class App {
 
     // Add new object to workout array
     this.#workouts.push(workout);
-    console.log(workout);
 
     // Render workout on map as marker
     this._renderWorkoutMarker(workout);
@@ -196,6 +204,9 @@ class App {
 
     // hide form + clear input fields
     this._hideForm();
+
+    // set local storage to all workouts
+    this._setLocalStorage();
   }
 
   _renderWorkoutMarker(workout) {
@@ -277,8 +288,6 @@ class App {
       work => work.id === workoutEl.dataset.id
     );
 
-    console.log(workout);
-
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animate: true,
       pan: {
@@ -287,7 +296,34 @@ class App {
     });
 
     //using the public interface
-    workout.click();
+    //disable the functionality of counting the clicks. because obj lose inheritance with local storage API
+    // workout.click();
+  }
+
+  _setLocalStorage() {
+    // JSON.stringify converts any object in JavaScript to a string.
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    // JSON.parse convert string back to object
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    console.log(data);
+
+    //guard clause
+    if (!data) return;
+
+    this.#workouts = data;
+
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+    });
+  }
+
+  reset() {
+    localStorage.removeItem('workouts');
+    //location is basically a big object that contains a lot of methods and properties in the browser.
+    location.reload();
   }
 }
 const app = new App();
